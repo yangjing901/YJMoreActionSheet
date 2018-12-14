@@ -8,29 +8,46 @@
 
 #import "YJMoreActionSheet.h"
 
-#define YJMoreActionHeight  50
-#define YJMoreActionWidth   153
+static const CGFloat YJMoreActionHeight = 50.0;
+static const CGFloat YJMoreActionWidth = 153.0;
+
+@interface YJMoreActionSheet()
+
+@end
 
 @implementation YJMoreActionSheet {
     BOOL    _animating;
+    
+    NSMutableArray <YJMoreAction *>* _actionArray;
 }
 
 - (instancetype)initWithFrame:(CGRect)frame {
     self = [super initWithFrame:frame];
     if (self) {
+        _actionArray = [[NSMutableArray alloc] init];
+        
+        [self configSubViews];
+    }
+    return self;
+}
+
+- (instancetype)init {
+    self = [super init];
+    if (self) {
+        _actionArray = [[NSMutableArray alloc] init];
+        
         [self configSubViews];
     }
     return self;
 }
 
 //MARK: - private methods
-
 - (void)addAction:(YJMoreAction *)action {
     [self addSubview:action];
-    action.frame = CGRectMake(CGRectGetWidth(self.frame)-YJMoreActionWidth-15, 12+(YJMoreActionHeight+12)*self.actions.count, YJMoreActionWidth, YJMoreActionHeight);
+    action.frame = CGRectMake(CGRectGetWidth(self.bounds)-YJMoreActionWidth-15, 12+(YJMoreActionHeight+12)*_actionArray.count, YJMoreActionWidth, YJMoreActionHeight);
     
     [action addTarget:self action:@selector(itemsAction:) forControlEvents:UIControlEventTouchUpInside];
-    [self.actions addObject:action];
+    [_actionArray addObject:action];
 }
 
 - (void)itemsAction:(YJMoreAction *)sender {
@@ -47,36 +64,28 @@
     _animating = YES;
     
     self.hidden = NO;
+//    CABasicAnimation *alphaAnimation = [CABasicAnimation animationWithKeyPath:@"opacity"];
+//    alphaAnimation.duration = 0.25;
+//    alphaAnimation.fromValue = @0;
+//    alphaAnimation.toValue = @1;
+//    alphaAnimation.fillMode = kCAFillModeForwards;
+//    [self.layer addAnimation:alphaAnimation forKey:@"alphaAnimation"];
     
-    dispatch_semaphore_t semaphore = dispatch_semaphore_create(1);
-    
-    [UIView animateWithDuration:0.25 animations:^{
-        self.alpha = 1;
+    for (NSInteger i = 0, count = _actionArray.count; i < count; i++) {
+        YJMoreAction *action = _actionArray[i];
         
-    } completion:^(BOOL finished) {
-        dispatch_semaphore_signal(semaphore);
-        
-    }];
-    
-    dispatch_semaphore_wait(semaphore, DISPATCH_TIME_FOREVER);
-    
-    semaphore = dispatch_semaphore_create(self.actions.count);
-    
-    for (NSInteger i = 0, count = self.actions.count; i < count; i++) {
-        YJMoreAction *action = self.actions[i];
-        
-        action.frame = CGRectMake(CGRectGetWidth(self.frame), 12+(YJMoreActionHeight+12)*i, YJMoreActionWidth, YJMoreActionHeight);
-        
-        [UIView animateWithDuration:0.5 delay:i*0.15 usingSpringWithDamping:0.5 initialSpringVelocity:0.25 options:UIViewAnimationOptionCurveEaseInOut animations:^{
-            action.frame = CGRectMake(CGRectGetWidth(self.frame)-YJMoreActionWidth-15, 12+(YJMoreActionHeight+12)*i, YJMoreActionWidth, YJMoreActionHeight);
-
-        } completion:^(BOOL finished) {
-            dispatch_semaphore_signal(semaphore);
-            
-        }];
+        CASpringAnimation *positionAnimation = [CASpringAnimation animationWithKeyPath:@"position.x"];
+        positionAnimation.duration = 0.5;
+        positionAnimation.beginTime = CACurrentMediaTime() + i*0.15;
+        positionAnimation.fromValue = [NSNumber numberWithFloat:CGRectGetWidth(self.bounds)];
+        positionAnimation.toValue = [NSNumber numberWithFloat:CGRectGetWidth(self.bounds)-YJMoreActionWidth-15];
+        positionAnimation.damping = 1;
+        positionAnimation.initialVelocity = 5;
+        positionAnimation.mass = 1;
+        positionAnimation.stiffness = 10;
+        positionAnimation.fillMode = kCAFillModeForwards;
+        [action.layer addAnimation:positionAnimation forKey:@"positionAnimation"];
     }
-    
-    dispatch_semaphore_wait(semaphore, DISPATCH_TIME_FOREVER);
     _animating = NO;
 
 }
@@ -84,36 +93,28 @@
 - (void)dismiss {
     _animating = YES;
 
-    dispatch_semaphore_t semaphore = dispatch_semaphore_create(self.actions.count);
-
-    for (NSInteger i = self.actions.count-1; i >= 0; i--) {
-        YJMoreAction *action = self.actions[i];
+    for (NSInteger i = _actionArray.count-1; i >= 0; i--) {
+        YJMoreAction *action = _actionArray[i];
         
-        action.frame = CGRectMake(CGRectGetWidth(self.frame)-YJMoreActionWidth-15, 12+(YJMoreActionHeight+12)*i, YJMoreActionWidth, YJMoreActionHeight);
-        
-        [UIView animateWithDuration:0.5 delay:(self.actions.count-1-i)*0.15 usingSpringWithDamping:0.5 initialSpringVelocity:0.25 options:UIViewAnimationOptionCurveEaseInOut animations:^{
-            action.frame = CGRectMake(CGRectGetWidth(self.frame), 12+(YJMoreActionHeight+12)*i, YJMoreActionWidth, YJMoreActionHeight);
-            
-        } completion:^(BOOL finished) {
-            dispatch_semaphore_signal(semaphore);
-            
-        }];
+        CASpringAnimation *positionAnimation = [CASpringAnimation animationWithKeyPath:@"position.x"];
+        positionAnimation.duration = 0.5;
+        positionAnimation.beginTime = CACurrentMediaTime() + i*0.15;
+        positionAnimation.toValue = [NSNumber numberWithFloat:CGRectGetWidth(self.bounds)];
+        positionAnimation.fromValue = [NSNumber numberWithFloat:CGRectGetWidth(self.bounds)-YJMoreActionWidth-15];
+        positionAnimation.damping = 5;
+        positionAnimation.initialVelocity = 0.25;
+        positionAnimation.fillMode = kCAFillModeForwards;
+        [action.layer addAnimation:positionAnimation forKey:@"positionAnimation"];
     }
     
-    dispatch_semaphore_wait(semaphore, DISPATCH_TIME_FOREVER);
-    
-    semaphore = dispatch_semaphore_create(1);
-    
-    [UIView animateWithDuration:0.25 animations:^{
-        self.alpha = 0;
-        
-    } completion:^(BOOL finished) {
-        self.hidden = YES;
-        dispatch_semaphore_signal(semaphore);
+//    CABasicAnimation *alphaAnimation = [CABasicAnimation animationWithKeyPath:@"opacity"];
+//    alphaAnimation.duration = CACurrentMediaTime() + _actionArray.count*0.15;
+//    alphaAnimation.toValue = @0;
+//    alphaAnimation.fromValue = @1;
+//    alphaAnimation.fillMode = kCAFillModeForwards;
+//    [self.layer addAnimation:alphaAnimation forKey:@"alphaAnimation"];
+    self.hidden = YES;
 
-    }];
-    
-    dispatch_semaphore_wait(semaphore, DISPATCH_TIME_FOREVER);
     _animating = NO;
 
 }
