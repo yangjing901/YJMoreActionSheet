@@ -16,7 +16,7 @@ static const CGFloat YJMoreActionWidth = 153.0;
 @end
 
 @implementation YJMoreActionSheet {
-    BOOL    _animating;
+    BOOL    _isAnimating;
     
     NSMutableArray <YJMoreAction *>* _actionArray;
 }
@@ -44,7 +44,7 @@ static const CGFloat YJMoreActionWidth = 153.0;
 //MARK: - private methods
 - (void)addAction:(YJMoreAction *)action {
     [self addSubview:action];
-    action.frame = CGRectMake(CGRectGetWidth(self.bounds)-YJMoreActionWidth-15, 12+(YJMoreActionHeight+12)*_actionArray.count, YJMoreActionWidth, YJMoreActionHeight);
+    action.frame = CGRectMake(CGRectGetWidth(self.bounds), 12+(YJMoreActionHeight+12)*_actionArray.count, YJMoreActionWidth, YJMoreActionHeight);
     
     [action addTarget:self action:@selector(itemsAction:) forControlEvents:UIControlEventTouchUpInside];
     [_actionArray addObject:action];
@@ -53,69 +53,98 @@ static const CGFloat YJMoreActionWidth = 153.0;
 - (void)itemsAction:(YJMoreAction *)sender {
     if (sender.handler) sender.handler(sender);
 
-    self.active = NO;
+    [self dismissWithAnimation:NO];
+    _active = NO;
 }
 
 - (void)cancelAction:(UITapGestureRecognizer *)tap {
     self.active = NO;
 }
 
-- (void)show {
-    _animating = YES;
+- (void)showWithAnimation:(BOOL)animation {
+    if (_isAnimating) {
+        NSLog(@"yangjing_%@: 操作太频繁", NSStringFromClass([self class]));
+        return;
+    }
     
     self.hidden = NO;
-//    CABasicAnimation *alphaAnimation = [CABasicAnimation animationWithKeyPath:@"opacity"];
-//    alphaAnimation.duration = 0.25;
-//    alphaAnimation.fromValue = @0;
-//    alphaAnimation.toValue = @1;
-//    alphaAnimation.fillMode = kCAFillModeForwards;
-//    [self.layer addAnimation:alphaAnimation forKey:@"alphaAnimation"];
+    _isAnimating = YES;
     
-    for (NSInteger i = 0, count = _actionArray.count; i < count; i++) {
-        YJMoreAction *action = _actionArray[i];
+    if (animation) {
+        self.alpha = 0;
+        [UIView animateWithDuration:0.25 animations:^{
+            self.alpha = 1;
+        }];
         
-        CASpringAnimation *positionAnimation = [CASpringAnimation animationWithKeyPath:@"position.x"];
-        positionAnimation.duration = 0.5;
-        positionAnimation.beginTime = CACurrentMediaTime() + i*0.15;
-        positionAnimation.fromValue = [NSNumber numberWithFloat:CGRectGetWidth(self.bounds)];
-        positionAnimation.toValue = [NSNumber numberWithFloat:CGRectGetWidth(self.bounds)-YJMoreActionWidth-15];
-        positionAnimation.damping = 1;
-        positionAnimation.initialVelocity = 5;
-        positionAnimation.mass = 1;
-        positionAnimation.stiffness = 10;
-        positionAnimation.fillMode = kCAFillModeForwards;
-        [action.layer addAnimation:positionAnimation forKey:@"positionAnimation"];
+        for (NSInteger i = 0, count = _actionArray.count; i < count; i++) {
+            YJMoreAction *action = _actionArray[i];
+            
+            action.frame = CGRectMake(CGRectGetWidth(self.bounds)+15, 12+(YJMoreActionHeight+12)*i, YJMoreActionWidth, YJMoreActionHeight);
+            
+            [UIView animateWithDuration:0.25 delay:0.25+i*0.15 options:UIViewAnimationOptionCurveLinear animations:^{
+                
+                action.frame = CGRectMake(CGRectGetWidth(self.bounds)-YJMoreActionWidth-15, 12+(YJMoreActionHeight+12)*i, YJMoreActionWidth, YJMoreActionHeight);
+                
+            } completion:^(BOOL finished) {
+                if (i == count-1) _isAnimating = NO;
+                
+            }];
+        }
+        
+    } else {
+        self.alpha = 1;
+        
+        for (NSInteger i = 0, count = _actionArray.count; i < count; i++) {
+            YJMoreAction *action = _actionArray[i];
+            
+            action.frame = CGRectMake(CGRectGetWidth(self.bounds)-YJMoreActionWidth-15, 12+(YJMoreActionHeight+12)*i, YJMoreActionWidth, YJMoreActionHeight);
+            _isAnimating = NO;
+        }
     }
-    _animating = NO;
-
+    
 }
 
-- (void)dismiss {
-    _animating = YES;
-
-    for (NSInteger i = _actionArray.count-1; i >= 0; i--) {
-        YJMoreAction *action = _actionArray[i];
-        
-        CASpringAnimation *positionAnimation = [CASpringAnimation animationWithKeyPath:@"position.x"];
-        positionAnimation.duration = 0.5;
-        positionAnimation.beginTime = CACurrentMediaTime() + i*0.15;
-        positionAnimation.toValue = [NSNumber numberWithFloat:CGRectGetWidth(self.bounds)];
-        positionAnimation.fromValue = [NSNumber numberWithFloat:CGRectGetWidth(self.bounds)-YJMoreActionWidth-15];
-        positionAnimation.damping = 5;
-        positionAnimation.initialVelocity = 0.25;
-        positionAnimation.fillMode = kCAFillModeForwards;
-        [action.layer addAnimation:positionAnimation forKey:@"positionAnimation"];
+- (void)dismissWithAnimation:(BOOL)animation {
+    if (_isAnimating) {
+        NSLog(@"yangjing_%@: 操作太频繁", NSStringFromClass([self class]));
+        return;
     }
     
-//    CABasicAnimation *alphaAnimation = [CABasicAnimation animationWithKeyPath:@"opacity"];
-//    alphaAnimation.duration = CACurrentMediaTime() + _actionArray.count*0.15;
-//    alphaAnimation.toValue = @0;
-//    alphaAnimation.fromValue = @1;
-//    alphaAnimation.fillMode = kCAFillModeForwards;
-//    [self.layer addAnimation:alphaAnimation forKey:@"alphaAnimation"];
-    self.hidden = YES;
-
-    _animating = NO;
+    _isAnimating = YES;
+    
+    if (animation) {
+        for (NSInteger i = _actionArray.count-1; i >= 0; i--) {
+            YJMoreAction *action = _actionArray[i];
+            
+            action.frame = CGRectMake(CGRectGetWidth(self.bounds)-YJMoreActionWidth-15, 12+(YJMoreActionHeight+12)*i, YJMoreActionWidth, YJMoreActionHeight);
+            
+            [UIView animateWithDuration:0.25 delay:0.25+i*0.15 options:UIViewAnimationOptionCurveEaseOut animations:^{
+                action.frame = CGRectMake(CGRectGetWidth(self.bounds)+15, 12+(YJMoreActionHeight+12)*i, YJMoreActionWidth, YJMoreActionHeight);
+                
+            } completion:^(BOOL finished) {
+                
+            }];
+        }
+        
+        [UIView animateWithDuration:0.5 delay:_actionArray.count*0.15+0.25 options:UIViewAnimationOptionCurveLinear animations:^{
+            self.alpha = 0;
+            
+        } completion:^(BOOL finished) {
+            self.alpha = 1;
+            self.hidden = YES;
+            _isAnimating = NO;
+            
+        }];
+    } else {
+        for (NSInteger i = _actionArray.count-1; i >= 0; i--) {
+            YJMoreAction *action = _actionArray[i];
+            
+            action.frame = CGRectMake(CGRectGetWidth(self.bounds)+15, 12+(YJMoreActionHeight+12)*i, YJMoreActionWidth, YJMoreActionHeight);
+        }
+        self.alpha = 1;
+        self.hidden = YES;
+        _isAnimating = NO;
+    }
 
 }
 
@@ -139,25 +168,25 @@ static const CGFloat YJMoreActionWidth = 153.0;
 
 //MARK: - setter
 - (void)setActive:(BOOL)active {
-    if (_animating) return;
+    if (_isAnimating) {
+        NSLog(@"yangjing_%@: 操作太频繁", NSStringFromClass([self class]));
+        return;
+    }
     
     _active = active;
     
     if (active) {
-        [self show];
+        [self showWithAnimation:YES];
         
     } else {
-        [self dismiss];
+        [self dismissWithAnimation:YES];
         
     }
 }
 
 //MARK: - getter
 - (NSMutableArray<YJMoreAction *> *)actions {
-    if (!_actions) {
-        _actions = [[NSMutableArray alloc] init];
-    }
-    return _actions;
+    return _actionArray;
 }
 
 @end

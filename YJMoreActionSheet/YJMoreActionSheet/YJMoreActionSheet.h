@@ -13,7 +13,7 @@
 
 @property (nonatomic, assign) BOOL active;
 
-@property (nonatomic, strong) NSMutableArray <YJMoreAction *>*actions;
+@property (nonatomic, strong, readonly) NSMutableArray <YJMoreAction *>*actions;
 
 - (void)addAction:(YJMoreAction *)action;
 

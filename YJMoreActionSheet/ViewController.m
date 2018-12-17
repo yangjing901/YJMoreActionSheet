@@ -29,13 +29,8 @@
     self.moreActionSheet.active = !self.moreActionSheet.active;
 }
 
-- (void)reportAction:(id)sender {
-    NSLog(@"*** reportAction");
-}
-
-- (void)shareAction:(id)sender {
-    NSLog(@"*** shareAction");
-
+- (void)clickAction:(YJMoreAction *)sender {
+    NSLog(@"yangjing_%@: clickAction %@", NSStringFromClass([self class]), sender.titleLabel.text);
 }
 
 //MARK: - UI
@@ -48,16 +43,28 @@
     [self.view addSubview:self.moreActionSheet];
     //添加动作
     __weak typeof(self) weakSelf = self;
-    [weakSelf.moreActionSheet addAction:[YJMoreAction actionWithTitle:@"Report" handler:^(YJMoreAction *action) {
+    [weakSelf.moreActionSheet addAction:[YJMoreAction actionWithTitle:@"Action 1" handler:^(YJMoreAction *action) {
         __strong typeof(self) strongSelf = weakSelf;
-        [strongSelf reportAction:action];
+        [strongSelf clickAction:action];
         
     }]];
     
-    [weakSelf.moreActionSheet addAction:[YJMoreAction actionWithTitle:@"Share" handler:^(YJMoreAction *action) {
+    [weakSelf.moreActionSheet addAction:[YJMoreAction actionWithTitle:@"Action 2" handler:^(YJMoreAction *action) {
         __strong typeof(self) strongSelf = weakSelf;
-        [strongSelf shareAction:action];
+        [strongSelf clickAction:action];
 
+    }]];
+    
+    [weakSelf.moreActionSheet addAction:[YJMoreAction actionWithTitle:@"Action 3" handler:^(YJMoreAction *action) {
+        __strong typeof(self) strongSelf = weakSelf;
+        [strongSelf clickAction:action];
+        
+    }]];
+    
+    [weakSelf.moreActionSheet addAction:[YJMoreAction actionWithTitle:@"Action 4" handler:^(YJMoreAction *action) {
+        __strong typeof(self) strongSelf = weakSelf;
+        [strongSelf clickAction:action];
+        
     }]];
 }
 
